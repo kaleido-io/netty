@@ -64,6 +64,7 @@ import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -586,17 +587,12 @@ public class DnsNameResolver extends InetNameResolver {
     }
 
     private InetAddress resolveHostsFileEntry(String hostname) {
-        if (hostsFileEntriesResolver == null) {
+        // use the modern JVM's support for hostname resolution
+        try {
+            return InetAddress.getByName(hostname);
+        } catch (UnknownHostException e) {
+            logger.error("Failed to resolve hostname %s", hostname);
             return null;
-        } else {
-            InetAddress address = hostsFileEntriesResolver.address(hostname, resolvedAddressTypes);
-            if (address == null && PlatformDependent.isWindows() && LOCALHOST.equalsIgnoreCase(hostname)) {
-                // If we tried to resolve localhost we need workaround that windows removed localhost from its
-                // hostfile in later versions.
-                // See https://github.com/netty/netty/issues/5386
-                return LOCALHOST_ADDRESS;
-            }
-            return address;
         }
     }
 
